@@ -8,6 +8,10 @@ stop = False
 for dir_path, dir_names, filenames in os.walk(root_dir):
     if stop:
         break
+    # skip directories that are not years
+    years = [str(year) for year in range(2001, 2007)]
+    if any(dir_path.endswith(year) for year in years):
+        continue
     index = 0
     for file in filenames:
         if file.endswith('.xml'):
@@ -19,21 +23,32 @@ for dir_path, dir_names, filenames in os.walk(root_dir):
             date = root.find(".//doc.copyright").get('year') if root.find(".//doc.copyright") is not None else ""
             title = root.find(".//title").text if root.find(".//title") is not None else ""
             content_blocks = root.findall(".//block")
-            content = " ".join([block.find('p').text for block in content_blocks if block.find('p') is not None])
-            date = int(date)
-            if 1987 <= date <= 1997:
-                data.append({'date': date, 'title': title, 'content': content})
-            elif date > 1997:
-                stop = True
-                break
-            if index == 1000:
+            content = ""
+            for block in content_blocks:
+                for p in block.findall('p'):
+                    if p.text is not None:
+                        content += p.text + "\n"
+
+            if date.isdigit() and 1987 <= int(date) <= 1997:
+                data.append({'date': int(date), 'title': title, 'content': content})
+
+            if index == 10000:
                 print(date)
-                print("Breaking")
-                break
+
             index += 1
 
-dataset = Dataset.from_dict({'date': [item['date'] for item in data], 'title': [item['title'] for item in data],
-                             'content': [item['content'] for item in data]})
+# dataset = Dataset.from_dict({'date': [item['date'] for item in data], 'title': [item['title'] for item in data],
+#                              'content': [item['content'] for item in data]})
+dates = []
+titles = []
+contents = []
+for item in data:
+    dates.append(item['date'])
+    titles.append(item['title'])
+    contents.append(item['content'])
+
+dataset = Dataset.from_dict({'date': dates, 'title': titles, 'content': contents})
+
 
 # Save the dataset to hugging face
 
