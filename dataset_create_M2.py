@@ -9,7 +9,7 @@ for dir_path, dir_names, filenames in os.walk(root_dir):
     if stop:
         break
     # skip directories that are not years
-    years = [str(year) for year in range(1987, 2001)]
+    years = [str(year) for year in range(1987, 1999)]
     if any(dir_path.endswith(year) for year in years):
         continue
     index = 0
@@ -26,10 +26,12 @@ for dir_path, dir_names, filenames in os.walk(root_dir):
             content = ""
             for block in content_blocks:
                 for p in block.findall('p'):
-                    if p.text is not None:
+                    if p.text is not None and len(p.text) > 3:
                         content += p.text + "\n"
+            if len(content) <= 1000:
+                continue
 
-            if date.isdigit() and 2001 <= int(date) <= 2007:
+            if date.isdigit() and 2000 <= int(date) <= 2007:
                 data.append({'date': int(date), 'title': title, 'content': content})
             elif date.isdigit() and int(date) > 2007:
                 stop = True
@@ -59,7 +61,7 @@ load_token = load_token.read()
 
 train_dataset = dataset.train_test_split(test_size=0.1, seed=42)
 
-train_dataset.push_to_hub("ErikCikalleshi/new_york_times_news_2001_2007", private=True,
+train_dataset.push_to_hub("ErikCikalleshi/new_york_times_news_2000_2007", private=True,
                           token=load_token)
 
 # split the dataset
