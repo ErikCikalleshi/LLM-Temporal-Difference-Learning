@@ -54,7 +54,7 @@ dataset = Dataset.from_dict({'date': dates, 'title': titles, 'content': contents
 # Save the dataset to hugging face
 
 # Save the dataset to hugging face
-load_token = open("C:/Users/Th3RapidK1ller/Documents/BA/LLM-Temporal-Difference-Learning/token.txt", "r")
+load_token = open("/preprocessing/token.txt", "r")
 load_token = load_token.read()
 
 train_dataset = dataset.train_test_split(test_size=0.1, seed=42)

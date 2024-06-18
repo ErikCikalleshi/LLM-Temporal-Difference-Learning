@@ -1,14 +1,8 @@
 import pandas as pd
 
 # Read CSV files into pandas DataFrames
-formatted_text_df = pd.read_csv('formatted_text_order.csv')
-responses_df = pd.read_csv('responses.csv')
-
-# the responses_df DataFrame is for each section just one row with the multiple anwsers -> split every tuple of historical informativeness and truthfulness into a new row with the same sectionNumber
-# "2024/06/12 12:30:06 PM OESZ","","","Section 1","1","2","2","1" to
-# "1", "2", "Section 1"
-# "2", "1", "Section 1"
-# ...
+formatted_text_df = pd.read_csv('Formatted Text Order - Tabellenblatt1.csv')
+responses_df = pd.read_csv('Historical Model Evaluation Survey (Antworten) - Formularantworten 1.csv')
 
 # Initialize an empty list to store the split rows
 split_rows = []
@@ -18,27 +12,41 @@ for _, row in responses_df.iterrows():
     section_number = row['Select the section you were instructed to complete:'].split()[1]
     # Iterate over each pair of Historical Informativeness and Truthfulness
     # skip the first 3 rows because they are not relevant
+    print(int(section_number))
     row = row[3:]
-    for i in range(1, len(row), 2):
+    for i in range(1, len(row)):
         info = row[i]
-        truth = row[i + 1]
+        # truth = row[i + 1]
+        # print({'sectionNumber': int(section_number), 'Historical Informativeness': info})
         split_rows.append({'sectionNumber': int(section_number),
-                           'Historical Informativeness': info,
-                           'Historical Truthfulness': truth})
+                           'Historical Informativeness': info})
+        # 'Historical Truthfulness': truth})
 
 split_rows_df = pd.DataFrame(split_rows)
 
 print(split_rows_df)
+
 # remove for each section nan values of Historical Informativeness and Truthfulness
 split_rows_df = split_rows_df.dropna()
+
+# Ensure the column 'Historical Informativeness' exists in formatted_text_df
+if 'Historical Informativeness' not in formatted_text_df.columns:
+    formatted_text_df['Historical Informativeness'] = None
+
 for section_number in split_rows_df['sectionNumber'].unique():
-    # get historical informativeness and truthfulness for each section
-    section_data = split_rows_df[split_rows_df['sectionNumber'] == int(section_number)]
-    # add to the formatted_text_df DataFrame the section data without the sectionNumber but Historical Informativeness and Truthfulness do not exist in the formatted_text_df DataFrame
-    formatted_text_df.loc[formatted_text_df['sectionNumber'] == int(section_number), 'Historical Informativeness'] = \
-        section_data['Historical Informativeness'].values
-    formatted_text_df.loc[formatted_text_df['sectionNumber'] == int(section_number), 'Historical Truthfulness'] = \
-        section_data['Historical Truthfulness'].values
+    # get historical informativeness for each section
+    section_data = split_rows_df[split_rows_df['sectionNumber'] == int(section_number)][
+        'Historical Informativeness'].values
+
+    # Ensure the lengths match by repeating or trimming the data as necessary
+    formatted_text_len = formatted_text_df[formatted_text_df['sectionNumber'] == int(section_number)].shape[0]
+    if len(section_data) > formatted_text_len:
+        section_data = section_data[:formatted_text_len]
+    elif len(section_data) < formatted_text_len:
+        section_data = list(section_data) + [None] * (formatted_text_len - len(section_data))
+
+    formatted_text_df.loc[
+        formatted_text_df['sectionNumber'] == int(section_number), 'Historical Informativeness'] = section_data
 
 print(formatted_text_df)
 # Save the merged DataFrame to a new CSV file
